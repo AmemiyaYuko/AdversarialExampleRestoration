@@ -1,6 +1,10 @@
 #PyCharm
 .idea/
+ckpt/
+logger/
+
 #Tensorflow
+test.py
 
 
 # Byte-compiled / optimized / DLL files
