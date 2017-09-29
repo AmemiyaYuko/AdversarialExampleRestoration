@@ -58,4 +58,4 @@ def train(batch_size, max_epoch):
 
 
 if __name__ == "__main__":
-    train(512, 500)
+    train(512, 1000)
