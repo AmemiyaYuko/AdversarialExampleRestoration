@@ -7,7 +7,7 @@ from model import model
 
 def preprocessing():
     train_images, train_labels, test_images, test_labels = load_cifar10(
-        prefix=r"/home/qide/Dataset/cifar-10-batches-py/")
+        prefix=r"E:\Datasets\cifar-10-batches-py")
     train_images /= 255.0
     test_images /= 255.0
     train_labels = (np.arange(10) == train_labels[:, None]).astype(np.float32)
@@ -33,10 +33,11 @@ def train(batch_size, max_epoch):
             if (i % 10 == 0):
                 saver.save(sess, "ckpt/", global_step=graph['global_step'])
             gstep = 0
+            shuffled_images, shuffled_labels = unison_shuffled_copies(train_images, train_labels)
             # train_images, train_labels=unison_shuffled_copies(train_images,train_labels)
             for j in range(len(train_images) // batch_size):
-                trn_imgs = train_images[j * batch_size:(j + 1) * batch_size]
-                trn_labels = train_labels[j * batch_size:(j + 1) * batch_size]
+                trn_imgs = shuffled_images[j * batch_size:(j + 1) * batch_size]
+                trn_labels = shuffled_labels[j * batch_size:(j + 1) * batch_size]
                 graph_dict = {graph["x"]: trn_imgs,
                               graph["y"]: trn_labels,
                               graph["keep_prob"]: 0.5}
@@ -57,5 +58,16 @@ def train(batch_size, max_epoch):
     sess.close()
 
 
+def shuffle_in_unison(a, b):
+    assert len(a) == len(b)
+    shuffled_a = np.empty(a.shape, dtype=a.dtype)
+    shuffled_b = np.empty(b.shape, dtype=b.dtype)
+    permutation = np.random.permutation(len(a))
+    for old_index, new_index in enumerate(permutation):
+        shuffled_a[new_index] = a[old_index]
+        shuffled_b[new_index] = b[old_index]
+    return shuffled_a, shuffled_b
+
+
 if __name__ == "__main__":
-    train(512, 1000)
+    train(256, 1000)
