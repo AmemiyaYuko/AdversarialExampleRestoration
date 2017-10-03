@@ -61,7 +61,7 @@ def train(batch_size, max_epoch, perform_clean=False):
                           graph["y"]: test_labels[:1000],
                           graph["keep_prob"]: 1,
                           }
-            accuracy, summary, weights = sess.run([graph['accuracy'], graph['summary'], fc1_var], feed_dict=graph_dict)
+            accuracy, summary, weights = sess.run([graph['accuracy'], graph['summary']], feed_dict=graph_dict)
             tst_summary.add_summary(summary, global_step=gstep)
             print("Accuracy in epoch #" + str(i) + " = " + str(accuracy))
             print('------------------\n')
