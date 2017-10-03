@@ -50,7 +50,8 @@ def train(batch_size, max_epoch, perform_clean=False):
                 trn_labels = shuffled_labels[j * batch_size:(j + 1) * batch_size]
                 graph_dict = {graph["x"]: trn_imgs,
                               graph["y"]: trn_labels,
-                              graph["keep_prob"]: 0.5}
+                              graph["keep_prob"]: 0.5,
+                              graph['is_training']: True}
                 opt, loss, summary, step = sess.run(
                     [graph['optimizer'], graph['loss'], graph['summary'], graph['global_step']], feed_dict=graph_dict)
                 trn_summary.add_summary(summary, step)
@@ -62,6 +63,7 @@ def train(batch_size, max_epoch, perform_clean=False):
             graph_dict = {graph["x"]: test_images[:1000],
                           graph["y"]: test_labels[:1000],
                           graph["keep_prob"]: 1,
+                          graph["is_training"]: False
                           }
             accuracy, summary = sess.run([graph['accuracy'], graph['summary']], feed_dict=graph_dict)
             tst_summary.add_summary(summary, global_step=gstep)
@@ -92,4 +94,4 @@ def get_weights(name):
 
 
 if __name__ == "__main__":
-    train(256, 1000, perform_clean=True)
+    train(256, 100, perform_clean=True)
