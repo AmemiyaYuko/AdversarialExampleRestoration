@@ -16,7 +16,8 @@ def model():
                              name="conv" + str(i)), [2, 2], strides=2, name="pool" + str(i)))
         input = convs[len(convs) - 1]
     # Bottleneck structure
-    bn_conv1 = tf.layers.conv2d(tf.layers.batch_normalization(input), 512, [1, 1], padding="valid", name="bn_conv1")
+    drop1 = tf.layers.dropout(input, rate=keep_prob)
+    bn_conv1 = tf.layers.conv2d(tf.layers.batch_normalization(drop1), 512, [1, 1], padding="valid", name="bn_conv1")
     bn_conv2 = tf.layers.conv2d(tf.layers.batch_normalization(bn_conv1), 256, [1, 1], padding="valid", name="bn_conv2")
 
     fc1 = tf.layers.dense(layers.flatten(bn_conv2), 512, activation=tf.nn.relu,
