@@ -2,31 +2,32 @@ import tensorflow as tf
 import tensorflow.contrib.layers as layers
 
 
-def model():
+def model(is_training=True):
     x_input = tf.placeholder(dtype=tf.float32, shape=[None, 32, 32, 3], name="images")
     y_input = tf.placeholder(dtype=tf.float32, shape=[None, 10], name="labels")
     keep_prob = tf.placeholder(dtype=tf.float32, name="keep_prob")
+
     conv1 = tf.layers.conv2d(x_input, 256, [3, 3], padding="same",
                              name="conv1", kernel_regularizer=layers.l2_regularizer(scale=1e-4))
-    conv2 = tf.layers.conv2d(tf.layers.batch_normalization(conv1), 128, [1, 1], padding="same",
+    conv2 = tf.layers.conv2d(tf.layers.batch_normalization(conv1, training=is_training), 128, [1, 1], padding="same",
                              name="conv2", kernel_regularizer=layers.l2_regularizer(scale=1e-4))
-    conv3 = tf.layers.conv2d(tf.layers.batch_normalization(conv2), 128, [1, 1], padding="same",
+    conv3 = tf.layers.conv2d(tf.layers.batch_normalization(conv2, training=is_training), 128, [1, 1], padding="same",
                              name="conv3", kernel_regularizer=layers.l2_regularizer(scale=1e-4))
     pool1 = tf.layers.max_pooling2d(conv3, [3, 3], 2, name="pool1")
     drop1 = tf.layers.dropout(pool1, rate=keep_prob, name="drop1")
     conv4 = tf.layers.conv2d(drop1, 256, [3, 3], padding="same",
                              name="conv4", kernel_regularizer=layers.l2_regularizer(scale=1e-4))
-    conv5 = tf.layers.conv2d(tf.layers.batch_normalization(conv4), 256, [1, 1], padding="same",
+    conv5 = tf.layers.conv2d(tf.layers.batch_normalization(conv4, training=is_training), 256, [1, 1], padding="same",
                              name="conv5", kernel_regularizer=layers.l2_regularizer(scale=1e-4))
-    conv6 = tf.layers.conv2d(tf.layers.batch_normalization(conv5), 256, [1, 1], padding="same",
+    conv6 = tf.layers.conv2d(tf.layers.batch_normalization(conv5, training=is_training), 256, [1, 1], padding="same",
                              name="conv6", kernel_regularizer=layers.l2_regularizer(scale=1e-4))
     pool2 = tf.layers.max_pooling2d(conv6, [3, 3], 2, name="pool2")
     drop2 = tf.layers.dropout(pool2, rate=keep_prob, name="drop2")
     conv7 = tf.layers.conv2d(drop2, 256, [3, 3], padding="same",
                              name="conv7", kernel_regularizer=layers.l2_regularizer(scale=1e-4))
-    conv8 = tf.layers.conv2d(tf.layers.batch_normalization(conv7), 128, [1, 1], padding="same",
+    conv8 = tf.layers.conv2d(tf.layers.batch_normalization(conv7, training=is_training), 128, [1, 1], padding="same",
                              name="conv8", kernel_regularizer=layers.l2_regularizer(scale=1e-4))
-    conv9 = tf.layers.conv2d(tf.layers.batch_normalization(conv8), 128, [1, 1], padding="same",
+    conv9 = tf.layers.conv2d(tf.layers.batch_normalization(conv8, training=is_training), 128, [1, 1], padding="same",
                              name="conv9", kernel_regularizer=layers.l2_regularizer(scale=1e-4))
     pool3 = tf.layers.average_pooling2d(conv9, [2, 2], 2, name="pool3")
 
@@ -53,4 +54,4 @@ def model():
             "global_step": step,
             "x": x_input,
             "y": y_input,
-            "keep_prob": keep_prob, }
+            "keep_prob": keep_prob}
