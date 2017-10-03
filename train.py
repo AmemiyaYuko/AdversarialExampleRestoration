@@ -12,7 +12,9 @@ def preprocessing():
     train_images, train_labels, test_images, test_labels = load_cifar10(
         prefix=r"/home/qide/Dataset/cifar-10-batches-py")
     train_images /= 255.0
+    train_images = train_images * 2 - 1
     test_images /= 255.0
+    test_images = test_images * 2 - 1
     train_labels = (np.arange(10) == train_labels[:, None]).astype(np.float32)
     test_labels = (np.arange(10) == test_labels[:, None]).astype(np.float32)
     return train_images, train_labels, test_images, test_labels
