@@ -2,11 +2,11 @@ import tensorflow as tf
 import tensorflow.contrib.layers as layers
 
 
-def model(is_training=True):
+def model():
     x_input = tf.placeholder(dtype=tf.float32, shape=[None, 32, 32, 3], name="images")
     y_input = tf.placeholder(dtype=tf.float32, shape=[None, 10], name="labels")
     keep_prob = tf.placeholder(dtype=tf.float32, name="keep_prob")
-
+    is_training = tf.placeholder(dtype=tf.bool, name="is_training")
     conv1 = tf.layers.conv2d(x_input, 256, [3, 3], padding="same",
                              name="conv1", kernel_regularizer=layers.l2_regularizer(scale=1e-4))
     conv2 = tf.layers.conv2d(tf.layers.batch_normalization(conv1, training=is_training), 128, [1, 1], padding="same",
@@ -40,7 +40,9 @@ def model(is_training=True):
     loss = tf.add(loss, reg)
     step = tf.get_variable("step", shape=[], initializer=tf.constant_initializer(0), trainable=False)
     lrate = tf.train.exponential_decay(1e-4, step, decay_rate=0.95, decay_steps=1000, staircase=True)
-    optimizer = tf.train.AdamOptimizer(lrate).minimize(loss, global_step=step)
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    with tf.control_dependencies(update_ops):
+        optimizer = tf.train.AdamOptimizer(lrate).minimize(loss, global_step=step)
     accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(fc2, 1), tf.argmax(y_input, 1)), dtype=tf.float32))
     prediction = tf.nn.softmax(fc2)
     tf.summary.scalar("loss", loss)
@@ -54,4 +56,5 @@ def model(is_training=True):
             "global_step": step,
             "x": x_input,
             "y": y_input,
-            "keep_prob": keep_prob}
+            "keep_prob": keep_prob,
+            "is_training": is_training}
