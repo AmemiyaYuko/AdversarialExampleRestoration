@@ -2,7 +2,7 @@
 .idea/
 ckpt/
 logger/
-
+trash_files/
 #Tensorflow
 test.py
 

@@ -3,7 +3,6 @@ import shutil
 
 import numpy as np
 import tensorflow as tf
-
 from cifar10 import load_cifar10
 from model_without_slim import model
 
@@ -43,7 +42,7 @@ def train(batch_size, max_epoch, perform_clean=False):
             if (i % 10 == 0):
                 saver.save(sess, "ckpt/", global_step=graph['global_step'])
             gstep = 0
-            shuffled_images, shuffled_labels = unison_shuffled_copies(train_images, train_labels)
+            shuffled_images, shuffled_labels = shuffle_in_unison(train_images, train_labels)
             # train_images, train_labels=unison_shuffled_copies(train_images,train_labels)
             for j in range(len(train_images) // batch_size):
                 trn_imgs = shuffled_images[j * batch_size:(j + 1) * batch_size]
