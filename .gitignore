@@ -1,11 +1,17 @@
 #PyCharm
 .idea/
+
 ckpt/
+
 logger/
+
 deprecated_files/
 tst/
+
 pre-trained/
+
 tf_cifar10/
+
 #Tensorflow
 test.py
 
