@@ -2,7 +2,10 @@
 .idea/
 ckpt/
 logger/
-trash_files/
+deprecated_files/
+tst/
+pre-trained/
+tf_cifar10/
 #Tensorflow
 test.py
 
