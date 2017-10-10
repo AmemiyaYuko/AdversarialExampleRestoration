@@ -11,11 +11,14 @@ import MobileNet as mn
 tf.flags.DEFINE_integer("batch_size", 32, 'How many images to be processed at one time')
 tf.flags.DEFINE_integer("image_size", 224, 'Size of images')
 tf.flags.DEFINE_string(
-    'checkpoint_path', r'pre-trained/mobilenet_v1_1.0_224_2017_06_14/',
+    'master', '', 'The address of the TensorFlow master to use.')
+tf.flags.DEFINE_string(
+    'checkpoint_path',
+    r'E:\Dropbox\Dropbox\Code\AdversarialExampleRestoration\pre-trained\mobilenet_v1_1.0_224_2017_06_14',
     'Path to checkpoint for inception network.')
 tf.flags.DEFINE_string(
     'input_dir',
-    'C:/Datasets/Kaggle/nips2017_adversarial_attack/nips-2017-adversarial-learning-development-set/images',
+    'E:\Datasets\Kaggle\images',
     'Input directory with images.')
 tf.flags.DEFINE_string(
     'output_dir', 'E:/output', 'Output directory with images.')
@@ -51,7 +54,10 @@ def load_images(input_dir, batch_shape):
     batch_size = batch_shape[0]
     for filepath in tf.gfile.Glob(os.path.join(input_dir, '*.png')):
         with tf.gfile.Open(filepath, mode="rb") as f:
-            image = np.array(Image.open(f).convert('RGB')).astype(np.float) / 255.0
+            image=Image.open(f).convert('RGB')
+            image=image.resize([FLAGS.image_size,FLAGS.image_size])
+            image = np.array(image).astype(np.float) / 255.0
+
         # Images for inception classifier are normalized to be in [-1, 1] interval.
         images[idx, :, :, :] = image * 2.0 - 1.0
         filenames.append(os.path.basename(filepath))
@@ -66,6 +72,8 @@ def load_images(input_dir, batch_shape):
 
 
 def save_images(images, filenames, output_dir):
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
     for i, filename in enumerate(filenames):
         with tf.gfile.Open(os.path.join(output_dir, filename), 'wb') as f:
             img = (((images[i, :, :, :] + 1.0) * 0.5) * 255.0).astype(np.uint8)
@@ -88,7 +96,7 @@ def main(_):
         saver = tf.train.Saver(slim.get_model_variables())
         session_creator = tf.train.ChiefSessionCreator(
             scaffold=tf.train.Scaffold(saver=saver),
-            checkpoint_filename_with_path=FLAGS.checkpoint_path)
+            checkpoint_dir=FLAGS.checkpoint_path, master=FLAGS.master)
         with tf.train.MonitoredSession(session_creator=session_creator) as sess:
             for filenames, images in load_images(FLAGS.input_dir, batch_shape):
                 adv_images = sess.run(x_adv, feed_dict={inputs: images})
