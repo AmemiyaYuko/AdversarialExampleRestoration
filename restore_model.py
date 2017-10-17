@@ -23,7 +23,7 @@ def model(num_layers=10, image_size=299, is_trainging=False):
     loss = tf.reduce_mean(tf.losses.mean_squared_error(predictions=output, labels=residual_image)) + tf.reduce_mean(
         tf.losses.get_regularization_losses())
     optimizer = tf.train.AdamOptimizer(learning_rate=lrate).minimize(loss, global_step=step)
-    output_full = tf.add(output, tf.layers.flatten(ori_image))
+    output_full = tf.add(output, tf.layers.flatten(adv_image))
     pictures_full = tf.reshape(output_full, shape=[None, image_size, image_size, 3], name="full_pictures")
     pictures_res = tf.reshape(output, shape=[None, image_size, image_size, 3], name="residual_maps")
     tf.summary.image("predicted_residual_map", pictures_res)
