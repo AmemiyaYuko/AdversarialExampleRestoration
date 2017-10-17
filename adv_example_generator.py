@@ -16,10 +16,10 @@ def adv_attack(model, images, eps, clip_min, clip_max, method="fgsm"):
 
 def model_selector(name="mobilenet"):
     if name == "mobilenet":
-        model = MobilenetModel(1001)
+        return MobilenetModel(1001)
     if name == "inceptionv3":
-        model = InceptionV3Model(1001)
-    return model
+        return InceptionV3Model(1001)
+    return None
 
 
 def main(_):
