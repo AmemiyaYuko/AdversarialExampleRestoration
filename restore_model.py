@@ -40,5 +40,6 @@ def model(num_layers=10, image_size=299, is_trainging=False):
             "loss": loss,
             "global_step": step,
             "x": ori_image,
-            "y": adv_image
+            "y": adv_image,
+            "restored_images": pictures_full
             }
