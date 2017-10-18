@@ -6,13 +6,18 @@ def model(num_layers=10, image_size=299, is_trainging=False):
     ori_image = tf.placeholder(tf.float16, shape=[None, image_size, image_size, 3])
     adv_image = tf.placeholder(tf.float16, shape=[None, image_size, image_size, 3])
     residual_image = tf.add(ori_image, -1.0 * adv_image)
-    x = tf.layers.batch_normalization(adv_image, training=is_trainging)
+    x = tf.layers.conv2d(inputs=tf.layers.batch_normalization(adv_image, training=is_trainging), filters=128,
+                         kernel_size=[1, 1], padding="valid", kernel_regularizer=tf.nn.l2_loss)
+    nodes = []
     for i in range(num_layers // 2):
-        x = tf.layers.conv2d(inputs=x, filters=256, kernel_size=[3, 3], padding="same",
+        x = tf.layers.conv2d(inputs=x, filters=128, kernel_size=[3, 3], padding="valid",
                              kernel_regularizer=tf.nn.l2_loss, name="conv_%2d" % i)
         x = tf.nn.leaky_relu(x, name="lrelu_conv_%2d" % i)
+        nodes.append(x)
     for i in range(num_layers // 2):
-        x = tf.layers.conv2d_transpose(inputs=x, filters=256, kernel_size=[3, 3], padding="same",
+        # skip-connection
+        x = tf.stack([x, nodes[num_layers // 2 - i]])
+        x = tf.layers.conv2d_transpose(inputs=x, filters=128, kernel_size=[3, 3], padding="valid",
                                        kernel_regularizer=tf.nn.l2_loss, name="deconv_%2d" % i)
         x = tf.nn.leaky_relu(x, name="lrelu_deconv_%2d" % i)
     flatten = tf.layers.flatten(x, name="flatten")
