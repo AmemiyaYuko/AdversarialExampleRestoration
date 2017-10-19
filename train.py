@@ -2,6 +2,7 @@ import os
 
 import tensorflow as tf
 
+from restore_model import model as res_model
 from utils import get_flags, get_image_size
 
 FLAGS = get_flags("train")
@@ -40,10 +41,17 @@ def get_database(adv_path, ori_path):
 
 
 def main(_):
-    sess = tf.Session()
-    sess.run(tf.global_variables_initializer())
-    iterator = get_database(r"/home/qide/imagenet-data/raw-data/validation", r"/home/qide/output")
-    ori, adv = sess.run(iterator.get_next())
+    with tf.Session() as sess:
+        writer = tf.summary.FileWriter("logger", sess.graph)
+        iterator = get_database(r"/home/qide/imagenet-data/raw-data/validation", r"/home/qide/output")
+        ori, adv = iterator.get_next()
+        model = res_model(ori, adv, is_trainging=True)
+        sess.run(tf.global_variables_initializer())
+        for i in range(100000):
+            _, summary, step = sess.run([model["optimizer"], model["summary"],
+                                         model["global_step"]])
+            writer.add_summary(summary, step)
+
 
 if __name__ == "__main__":
     tf.app.run()

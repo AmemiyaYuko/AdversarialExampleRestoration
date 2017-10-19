@@ -43,7 +43,7 @@ class MobilenetModel(object):
 
 
 def get_flags(method="fgsm"):
-    tf.flags.DEFINE_integer("batch_size", 32, 'How many images to be processed at one time')
+    tf.flags.DEFINE_integer("batch_size", 16, 'How many images to be processed at one time')
     tf.flags.DEFINE_string(
         'master', '', 'The address of the TensorFlow master to use.')
     tf.flags.DEFINE_string(
