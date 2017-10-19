@@ -49,23 +49,23 @@ def get_flags(method="fgsm"):
     tf.flags.DEFINE_string(
         'checkpoint_path',
         r'D:\Dropbox\Code\AdversarialExampleRestoration\pre-trained\mobilenet_v1_1.0_224_2017_06_14',
-        'Path to checkpoint for inception network.')
+        'Path to checkpoint network.')
     tf.flags.DEFINE_string(
         'input_dir',
         r'C:\Datasets\Kaggle\nips2017_adversarial_attack\nips-2017-adversarial-learning-development-set\images',
-        'Input directory with images.')
+        'path to imagenet dataset.')
     tf.flags.DEFINE_string(
-        'output_dir', 'E:/output', 'Output directory with images.')
+        'output_dir', '~/output', 'Output directory with images.')
     tf.flags.DEFINE_string("model_name", "inceptionv3", "name of aimed model")
     if method == "fgsm":
         tf.flags.DEFINE_float("eps", 0.2, "epsilon [0,2]")
         tf.flags.DEFINE_float("clip_min", -1.0, "clip min")
         tf.flags.DEFINE_float("clip_max", 1.0, "clip max")
         tf.flags.DEFINE_string("attack_method", "fgsm", "attack methods")
-    if method == "evaluate":
+    if method == "train":
         tf.flags.DEFINE_string(
             'adv_example_dir',
-            r'E:/output',
+            r'/home/qide/output',
             'path to adversarial examples')
 
     return tf.flags.FLAGS
@@ -84,7 +84,7 @@ def load_images(input_dir, batch_shape):
     filenames = []
     idx = 0
     batch_size = batch_shape[0]
-    for filepath in tf.gfile.Glob(os.path.join(input_dir, '*.png')):
+    for filepath in tf.gfile.Glob(os.path.join(input_dir, '*.JPEG')):
         images[idx, :, :, :] = read_single_image(filepath, batch_shape[1])
         filenames.append(os.path.basename(filepath))
         idx += 1
@@ -103,10 +103,10 @@ def save_images(images, filenames, output_dir):
     for i, filename in enumerate(filenames):
         with tf.gfile.Open(os.path.join(output_dir, filename), 'wb') as f:
             img = (((images[i, :, :, :] + 1.0) * 0.5) * 255.0).astype(np.uint8)
-            Image.fromarray(img).save(f, format='PNG')
+            Image.fromarray(img).save(f, format='JPEG')
 
 
-def get_image_size(name):
+def get_image_size(name="inceptionv3"):
     if name == "inceptionv3":
         return 299
     if name == "mobilenet":

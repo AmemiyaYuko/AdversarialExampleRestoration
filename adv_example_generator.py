@@ -1,3 +1,5 @@
+import os
+
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from cleverhans.attacks import FastGradientMethod
@@ -40,9 +42,15 @@ def main(_):
                 scaffold=tf.train.Scaffold(saver=saver),
                 checkpoint_dir=FLAGS.checkpoint_path, master=FLAGS.master)
         with tf.train.MonitoredSession(session_creator=session_creator) as sess:
-            for filenames, images in load_images(FLAGS.input_dir, batch_shape):
-                adv_images = sess.run(x_adv, feed_dict={inputs: images})
-                save_images(adv_images, filenames, FLAGS.output_dir)
+            for root, dirs, _ in os.walk(FLAGS.input_dir):
+                for d in dirs:
+                    for filenames, images in load_images(os.path.join(root, d), batch_shape):
+                        adv_images = sess.run(x_adv, feed_dict={inputs: images})
+                        if not os.path.exists(FLAGS.output_dir):
+                            os.mkdir(FLAGS.output_dir)
+                        if not os.path.exists(os.path.join(FLAGS.output_dir, d)):
+                            os.mkdir(os.path.join(FLAGS.output_dir, d))
+                        save_images(adv_images, filenames, os.path.join(FLAGS.output_dir, d))
 
 
 if __name__ == '__main__':
