@@ -34,5 +34,5 @@ def model(ori_image, adv_image, num_layers=6, image_size=299, is_trainging=False
     return {"optimizer": optimizer,
             "summary": summary,
             "loss": loss,
-            "global_step": step,
+            "global_step": step
             }

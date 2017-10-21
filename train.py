@@ -43,7 +43,7 @@ def get_database(adv_path, ori_path):
 def main(_):
     with tf.Session() as sess:
         writer = tf.summary.FileWriter("logger", sess.graph)
-        iterator = get_database(r"/home/qide/imagenet-data/raw-data/validation", r"/home/qide/output")
+        iterator = get_database(r"F:\2010_adv", r"D:\ILSVRC2012_img_val")
         ori, adv = iterator.get_next()
         model = res_model(ori, adv, is_trainging=True)
         sess.run(tf.global_variables_initializer())
