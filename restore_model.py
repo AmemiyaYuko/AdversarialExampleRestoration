@@ -15,6 +15,7 @@ def model(ori_image, adv_image, num_layers=8, image_size=299, is_trainging=False
         nodes.append(x)
     for i in range(num_layers // 2):
         x = tf.concat([x, nodes[num_layers // 2 - i - 1]], axis=0)
+        x = tf.layers.batch_normalization(x, training=is_trainging)
         x = tf.nn.leaky_relu(x, name="lrelu_deconv_%d" % i)
         x = tf.layers.conv2d_transpose(inputs=x, filters=64, kernel_size=[3, 3], padding="valid",
                                        name="deconv_%d" % i)
