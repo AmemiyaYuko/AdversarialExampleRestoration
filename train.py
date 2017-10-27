@@ -1,5 +1,6 @@
 import os
 
+import cv2
 import tensorflow as tf
 
 from restore_model import model as res_model
@@ -23,12 +24,11 @@ def get_database(adv_path, ori_path):
     ori_files = []
     adv_files = []
     for root, dirs, filenames in os.walk(ori_path):
-        for d in dirs:
-            for f in os.listdir(os.path.join(root, d)):
-                ori_image = os.path.join(root, d, f)
-                adv_image = os.path.join(adv_path, d, f)
-                ori_files.append(ori_image)
-                adv_files.append(adv_image)
+        for f in os.listdir(os.path.join(root)):
+            ori_image = os.path.join(root, f)
+            adv_image = os.path.join(adv_path, f)
+            ori_files.append(ori_image)
+            adv_files.append(adv_image)
     ori_examples = tf.constant(ori_files)
     adv_examples = tf.constant(adv_files)
     dataset = tf.data.Dataset.from_tensor_slices((ori_examples, adv_examples))
@@ -42,15 +42,21 @@ def get_database(adv_path, ori_path):
 
 def main(_):
     with tf.Session() as sess:
-        writer = tf.summary.FileWriter("logger", sess.graph)
-        iterator = get_database(r"F:\2010_adv", r"D:\ILSVRC2012_img_val")
+        writer = tf.summary.FileWriter(r"E:\Dropbox\Dropbox\Code\AdversarialExampleRestoration\logger", sess.graph)
+        iterator = get_database(r"D:\2010_adv", r"D:\ILSVRC2012_img_val")
         ori, adv = iterator.get_next()
         model = res_model(ori, adv, is_trainging=True)
         sess.run(tf.global_variables_initializer())
         for i in range(100000):
-            _, summary, step = sess.run([model["optimizer"], model["summary"],
-                                         model["global_step"]])
+            _, summary, step, loss, images = sess.run([model["optimizer"], model["summary"],
+                                                       model["global_step"], model["loss"], model["output"]])
             writer.add_summary(summary, step)
+            print(loss)
+            writer.flush()
+            if (i > 30) and (i % 30 == 1):
+                cv2.cvtColor(images[0], cv2.COLOR_RGB2BGR)
+                cv2.imshow("test", images[0])
+                cv2.waitKey()
 
 
 if __name__ == "__main__":
