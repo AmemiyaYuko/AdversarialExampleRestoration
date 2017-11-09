@@ -47,17 +47,21 @@ def main(_):
         ori, adv = iterator.get_next()
         model = res_model(ori, adv, is_trainging=True)
         sess.run(tf.global_variables_initializer())
-        for i in range(100000):
+        for i in range(1000000):
             _, summary, step, loss, images = sess.run([model["optimizer"], model["summary"],
                                                        model["global_step"], model["loss"], model["output"]])
             writer.add_summary(summary, step)
             print(loss)
             writer.flush()
-            if (i > 30) and (i % 30 == 1):
-                cv2.cvtColor(images[0], cv2.COLOR_RGB2BGR)
-                cv2.imshow("test", images[0])
-                cv2.waitKey()
+            if (i % 100 == 1):
+                cv2.imwrite("%d_1.jpg" % i, postprocess(images[0]))
+                cv2.imwrite("%d_2.jpg" % i, postprocess(images[1]))
+                cv2.imwrite("%d_3.jpg" % i, postprocess(images[2]))
+                cv2.imwrite("%d_4.jpg" % i, postprocess(images[3]))
 
 
+def postprocess(image):
+    img = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    return (img + 1) * 255
 if __name__ == "__main__":
     tf.app.run()
