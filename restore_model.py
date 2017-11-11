@@ -11,20 +11,21 @@ def model(ori_image, adv_image, num_layers=12, image_size=299, is_trainging=Fals
     nodes.append(x)
     for i in range(num_layers // 2):
         x = tf.layers.batch_normalization(nodes[-1], training=is_trainging)
-        x = tf.nn.leaky_relu(x, name="lrelu_conv_%d" % i, alpha=0.2)
-        x = tf.layers.conv2d(inputs=x, filters=20, kernel_size=[3, 3], padding="valid",
-                             name="conv_%d" % i, kernel_regularizer=l2_regularizer(0.4))
+        x = tf.layers.conv2d(inputs=x, filters=24, kernel_size=[3, 3], padding="valid",
+                             name="conv_%d" % i, kernel_regularizer=l2_regularizer(0.1))
+        x = tf.nn.leaky_relu(x, name="conv%d_lrelu" % i)
         nodes.append(x)
     x = nodes[-1]
     for i in range(num_layers // 2):
         x = tf.add(x, nodes[num_layers // 2 - i]) / 2.0
+        # x=tf.concat([x,nodes[num_layers//2-i]],axis=0)
         x = tf.layers.batch_normalization(x, training=is_trainging)
-        x = tf.nn.leaky_relu(x, name="lrelu_deconv_%d" % i, alpha=0.2)
-        x = tf.layers.conv2d_transpose(inputs=x, filters=20, kernel_size=[3, 3], padding="valid",
-                                       name="deconv_%d" % i, kernel_regularizer=l2_regularizer(0.4))
+        x = tf.layers.conv2d_transpose(inputs=x, filters=24, kernel_size=[3, 3], padding="valid",
+                                       name="deconv_%d" % i, kernel_regularizer=l2_regularizer(0.1))
+        x = tf.nn.leaky_relu(x, name="deconv%d_lrelu" % i)
 
     output = tf.layers.conv2d_transpose(inputs=x, filters=3, kernel_size=[1, 1], padding="valid",
-                                        kernel_regularizer=l2_regularizer(0.4))
+                                        kernel_regularizer=l2_regularizer(0.25))
     step = tf.get_variable("step", shape=[], initializer=tf.constant_initializer(0), trainable=False)
     lrate = tf.train.exponential_decay(1e-4, step, decay_rate=0.97, decay_steps=2000, staircase=True)
     loss = tf.reduce_mean(tf.losses.mean_squared_error(predictions=output, labels=residual_image)) + tf.reduce_mean(
@@ -35,8 +36,6 @@ def model(ori_image, adv_image, num_layers=12, image_size=299, is_trainging=Fals
     optimizer = tf.train.AdamOptimizer(learning_rate=lrate).minimize(loss, global_step=step)
     output_full = tf.add(output, adv_image)
     # tf.summary.image("predicted_residual_map", output)
-    if step % 50 == 51:
-        tf.summary.image("predicted_full_image", output_full)
     tf.summary.scalar("loss", loss)
     summary = tf.summary.merge_all()
     return {"optimizer": optimizer,
@@ -44,4 +43,5 @@ def model(ori_image, adv_image, num_layers=12, image_size=299, is_trainging=Fals
             "loss": loss,
             "global_step": step,
             "output": output_full,
+            "residual": output,
             }

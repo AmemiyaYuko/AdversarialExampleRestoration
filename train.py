@@ -1,6 +1,8 @@
 import os
+from time import time
 
 import cv2
+import numpy as np
 import tensorflow as tf
 
 from restore_model import model as res_model
@@ -46,18 +48,32 @@ def main(_):
         iterator = get_database(r"D:\2010_adv", r"D:\ILSVRC2012_img_val")
         ori, adv = iterator.get_next()
         model = res_model(ori, adv, is_trainging=True)
+        saver = tf.train.Saver()
         sess.run(tf.global_variables_initializer())
-        for i in range(1000000):
-            _, summary, step, loss, images = sess.run([model["optimizer"], model["summary"],
-                                                       model["global_step"], model["loss"], model["output"]])
+        for i in range(40000):
+            start = time()
+            _, summary, step, loss, images, residual = sess.run([model["optimizer"], model["summary"],
+                                                                 model["global_step"], model["loss"], model["output"],
+                                                                 model["residual"]])
+            start = time() - start
             writer.add_summary(summary, step)
-            print(loss)
-            writer.flush()
-            if (i % 100 == 1):
-                cv2.imwrite("%d_1.jpg" % i, postprocess(images[0]))
-                cv2.imwrite("%d_2.jpg" % i, postprocess(images[1]))
-                cv2.imwrite("%d_3.jpg" % i, postprocess(images[2]))
-                cv2.imwrite("%d_4.jpg" % i, postprocess(images[3]))
+            print("step %5d with loss %.8f takes time %.3f seconds" % (i, loss, start))
+            if (i % 500 == 1):
+                save_path = os.path.join(FLAGS.checkpoint_path, "step%06d" % i, "")
+                if not os.path.exists(save_path):
+                    os.mkdir(save_path)
+                result = saver.save(sess, save_path)
+                print("saved on " + result)
+                dir = r"D:\output_images\step" + str("%06d" % i)
+                if not os.path.exists(dir):
+                    os.mkdir(dir)
+                for j in range(len(images)):
+                    cv2.imwrite(os.path.join(dir, "full_%02d.jpg" % j), postprocess(images[j]))
+                    cv2.imwrite(os.path.join(dir, "res_%02d.jpg" % j), postprocess(residual[j]))
+                    np.save(os.path.join(dir, "full.npy"), np.array(images))
+                    np.save(os.path.join(dir, "res.npy"), np.array(residual))
+
+        sess.close()
 
 
 def postprocess(image):
