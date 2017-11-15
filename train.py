@@ -47,6 +47,7 @@ def get_database(adv_path, ori_path):
 
 def main(_):
     with tf.Session() as sess:
+        epoch = 0
         logdir = r"logger"
         if not os.path.isdir(logdir):
             shutil.rmtree(logdir)
@@ -83,6 +84,11 @@ def main(_):
                 for j in range(len(images)):
                     cv2.imwrite(os.path.join(dir, "full_%s.jpg" % fid[j]), postprocess(images[j]))
                     cv2.imwrite(os.path.join(dir, "res_%s.jpg" % fid[j]), postprocess(residual[j]))
+            if (i % 50000 == 0):
+                f = open("epoch_record.txt", "a+")
+                f.write("Epoch:%s,MSE:%.3f,PSNR=%.3f\n" % (epoch, mse, psnr))
+                epoch += 1
+
     sess.close()
 
 
