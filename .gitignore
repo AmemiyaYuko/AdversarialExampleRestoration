@@ -1,6 +1,6 @@
 #PyCharm
 .idea/
-
+*.png
 ckpt/
 
 logger/
@@ -13,7 +13,7 @@ pre-trained/
 tf_cifar10/
 
 #Tensorflow
-test.py
+
 
 
 # Byte-compiled / optimized / DLL files

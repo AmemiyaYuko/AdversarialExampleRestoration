@@ -57,6 +57,8 @@ def get_flags(method="fgsm"):
     tf.flags.DEFINE_string(
         'output_dir', '~/output', 'Output directory with images.')
     tf.flags.DEFINE_string("model_name", "inceptionv3", "name of aimed model")
+    tf.flags.DEFINE_boolean("is_training", True, "is training")
+    tf.flags.DEFINE_string("restore_dir", "", "checkpoint to restore")
     if method == "fgsm":
         tf.flags.DEFINE_float("eps", 0.2, "epsilon [0,2]")
         tf.flags.DEFINE_float("clip_min", -1.0, "clip min")

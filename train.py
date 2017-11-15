@@ -1,4 +1,5 @@
 import os
+import shutil
 from time import time
 
 import cv2
@@ -44,20 +45,29 @@ def get_database(adv_path, ori_path):
 
 def main(_):
     with tf.Session() as sess:
-        writer = tf.summary.FileWriter(r"E:\Dropbox\Dropbox\Code\AdversarialExampleRestoration\logger", sess.graph)
+        logdir = r"logger"
+        if not os.path.isdir(logdir):
+            shutil.rmtree(logdir)
+            os.mkdir(logdir)
+        saver = tf.train.Saver()
         iterator = get_database(r"D:\2010_adv", r"D:\ILSVRC2012_img_val")
         ori, adv = iterator.get_next()
-        model = res_model(ori, adv, is_trainging=True)
-        saver = tf.train.Saver()
+        model = res_model(ori, adv, is_trainging=FLAGS.is_training)
+        writer = tf.summary.FileWriter(logdir, sess.graph)
         sess.run(tf.global_variables_initializer())
-        for i in range(40000):
+        for i in range(20002):
             start = time()
-            _, summary, step, loss, images, residual = sess.run([model["optimizer"], model["summary"],
-                                                                 model["global_step"], model["loss"], model["output"],
-                                                                 model["residual"]])
+            _, summary, step, loss, images, residual, mse, psnr = sess.run([model["optimizer"], model["summary"],
+                                                                            model["global_step"], model["loss"],
+                                                                            model["output"],
+                                                                            model["residual"], model["mse"],
+                                                                            model['psnr']])
+
             start = time() - start
             writer.add_summary(summary, step)
-            print("step %5d with loss %.8f takes time %.3f seconds" % (i, loss, start))
+            writer.flush()
+            print(
+                "step %5d with loss %.8f takes time %.3f seconds. MSE= %.3f, PSNR= %.3f" % (i, loss, start, mse, psnr))
             if (i % 500 == 1):
                 save_path = os.path.join(FLAGS.checkpoint_path, "step%06d" % i, "")
                 if not os.path.exists(save_path):
@@ -72,12 +82,13 @@ def main(_):
                     cv2.imwrite(os.path.join(dir, "res_%02d.jpg" % j), postprocess(residual[j]))
                     np.save(os.path.join(dir, "full.npy"), np.array(images))
                     np.save(os.path.join(dir, "res.npy"), np.array(residual))
-
-        sess.close()
+    sess.close()
 
 
 def postprocess(image):
     img = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    return (img + 1) * 255
+    return (img + 1.0) * 255.0 / 2.0
+
+
 if __name__ == "__main__":
     tf.app.run()
