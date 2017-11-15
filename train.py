@@ -52,13 +52,14 @@ def main(_):
         if not os.path.isdir(logdir):
             shutil.rmtree(logdir)
             os.mkdir(logdir)
-        saver = tf.train.Saver()
-        iterator = get_database(r"D:\2010_adv", r"D:\ILSVRC2012_img_val")
+
+        iterator = get_database(r"/home/qide/output", r"/home/qide/imagenet-data/ILSVRC2012_img_val")
         ori, adv, file_name = iterator.get_next()
         model = res_model(ori, adv, file_name, is_trainging=FLAGS.is_training)
         writer = tf.summary.FileWriter(logdir, sess.graph)
         sess.run(tf.global_variables_initializer())
-        for i in range(20002):
+        saver = tf.train.Saver()
+        for i in range(300002):
             start = time()
             _, summary, step, loss, images, residual, mse, psnr, fid = sess.run([model["optimizer"], model["summary"],
                                                                                  model["global_step"], model["loss"],
@@ -69,26 +70,27 @@ def main(_):
             start = time() - start
             writer.add_summary(summary, step)
             writer.flush()
-            print(fid)
             print(
                 "step %5d with loss %.8f takes time %.3f seconds. MSE= %.3f, PSNR= %.3f" % (i, loss, start, mse, psnr))
-            if (i % 500 == 1):
+            if (i % 5000 == 1):
                 save_path = os.path.join(FLAGS.checkpoint_path, "step%06d" % i, "")
                 if not os.path.exists(save_path):
                     os.mkdir(save_path)
                 result = saver.save(sess, save_path)
                 print("saved on " + result)
-                dir = r"D:\output_images\step" + str("%06d" % i)
+                dir = r"/home/qide/Code/AdversarialExampleRestoration/output_images/" + str("%06d" % i)
                 if not os.path.exists(dir):
                     os.mkdir(dir)
                 for j in range(len(images)):
-                    cv2.imwrite(os.path.join(dir, "full_%s.jpg" % fid[j]), postprocess(images[j]))
-                    cv2.imwrite(os.path.join(dir, "res_%s.jpg" % fid[j]), postprocess(residual[j]))
-            if (i % 50000 == 0):
+                    name = str(fid[j]).split(".")[0].split("'")[-1]
+                    cv2.imwrite(os.path.join(dir, "full_%s.jpg" % name), postprocess(images[j]))
+                    cv2.imwrite(os.path.join(dir, "res_%s.jpg" % name), postprocess(residual[j]))
+            if (i % 50000 == 1):
                 f = open("epoch_record.txt", "a+")
                 f.write("Epoch:%s,MSE:%.3f,PSNR=%.3f\n" % (epoch, mse, psnr))
                 epoch += 1
-
+                f.close()
+                print("epoch record updated")
     sess.close()
 
 
