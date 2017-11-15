@@ -42,29 +42,30 @@ def main(_):
     with tf.train.MonitoredSession() as sess:
         saver = tf.train.Saver()
         iterator = get_database(r"D:\2010_adv", r"D:\ILSVRC2012_img_val")
-        ori, adv = iterator.get_next()
-        model = res_model(ori, adv, is_trainging=False)
+        ori, adv, fn = iterator.get_next()
+        model = res_model(ori, adv, fn, is_trainging=False)
         sess.run(tf.global_variables_initializer())
         ckpt_path = r"D:\checkpoints\step019501"
         ckpt = tf.train.latest_checkpoint(checkpoint_dir=ckpt_path)
         saver.restore(sess, ckpt)
-        counter = 0
+        nums = 0
         total_psnr = 0.
         total_mse = 0.
         while not sess.should_stop():
-            images, residual, mse, psnr, ori_image, adv_image = sess.run(
+            images, residual, mse, psnr, ori_image, adv_image, fid = sess.run(
                 [model["output"], model["residual"], model["mse"], model['psnr'], model["ori_image"],
-                 model["adv_image"]])
+                 model["adv_image"], model["file_name"]])
             total_psnr += psnr
             total_mse += mse
             for j in range(len(images)):
-                counter = counter + 1
-                cv2.imwrite(os.path.join(dir, "%06d_full.jpg" % counter), postprocess(images[j]))
-                cv2.imwrite(os.path.join(dir, "%06d_res.jpg" % j), postprocess(residual[j]))
-                cv2.imwrite(os.path.join(dir, "%06d_ori.jpg" % j), postprocess(ori_image[j]))
-                cv2.imwrite(os.path.join(dir, "%06d_adv.jpg" % j), postprocess(adv_image[j]))
-        print("%d images", counter)
-
+                nums += 1
+                name = str(fid[j]).split(".")[0].split("'")[-1]
+                cv2.imwrite(os.path.join(dir, "%s_full.jpg" % name), postprocess(images[j]))
+                cv2.imwrite(os.path.join(dir, "%s_res.jpg" % name), postprocess(residual[j]))
+                cv2.imwrite(os.path.join(dir, "%s_ori.jpg" % name), postprocess(ori_image[j]))
+                cv2.imwrite(os.path.join(dir, "%s_adv.jpg" % name), postprocess(adv_image[j]))
+        print(total_psnr / nums)
+        print(total_mse / nums)
 
 def postprocess(image):
     img = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
