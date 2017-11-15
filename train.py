@@ -3,7 +3,6 @@ import shutil
 from time import time
 
 import cv2
-import numpy as np
 import tensorflow as tf
 
 from restore_model import model as res_model
@@ -12,7 +11,7 @@ from utils import get_flags, get_image_size
 FLAGS = get_flags("train")
 
 
-def _preprocess_dataset(ori, adv):
+def _preprocess_dataset(ori, adv, file_names):
     image_size = get_image_size(FLAGS.model_name)
     ori_str = tf.read_file(ori)
     adv_str = tf.read_file(adv)
@@ -20,21 +19,24 @@ def _preprocess_dataset(ori, adv):
     adv_decoded = tf.image.decode_jpeg(adv_str, channels=3)
     ori_resized = tf.image.resize_images(ori_decoded, [image_size, image_size])
     adv_resized = tf.image.resize_images(adv_decoded, [image_size, image_size])
-    return ori_resized / 255 * 2 - 1, adv_resized / 255 * 2 - 1
+    return ori_resized / 255 * 2 - 1, adv_resized / 255 * 2 - 1, file_names
 
 
 def get_database(adv_path, ori_path):
     ori_files = []
     adv_files = []
+    file_names = []
     for root, dirs, filenames in os.walk(ori_path):
         for f in os.listdir(os.path.join(root)):
             ori_image = os.path.join(root, f)
             adv_image = os.path.join(adv_path, f)
             ori_files.append(ori_image)
             adv_files.append(adv_image)
+            file_names.append(f)
     ori_examples = tf.constant(ori_files)
     adv_examples = tf.constant(adv_files)
-    dataset = tf.data.Dataset.from_tensor_slices((ori_examples, adv_examples))
+    filenames_tensor = tf.constant(file_names, dtype=tf.string)
+    dataset = tf.data.Dataset.from_tensor_slices((ori_examples, adv_examples, filenames_tensor))
     dataset = dataset.map(_preprocess_dataset)
     dataset = dataset.repeat()
     dataset = dataset.batch(FLAGS.batch_size)
@@ -51,21 +53,22 @@ def main(_):
             os.mkdir(logdir)
         saver = tf.train.Saver()
         iterator = get_database(r"D:\2010_adv", r"D:\ILSVRC2012_img_val")
-        ori, adv = iterator.get_next()
-        model = res_model(ori, adv, is_trainging=FLAGS.is_training)
+        ori, adv, file_name = iterator.get_next()
+        model = res_model(ori, adv, file_name, is_trainging=FLAGS.is_training)
         writer = tf.summary.FileWriter(logdir, sess.graph)
         sess.run(tf.global_variables_initializer())
         for i in range(20002):
             start = time()
-            _, summary, step, loss, images, residual, mse, psnr = sess.run([model["optimizer"], model["summary"],
-                                                                            model["global_step"], model["loss"],
-                                                                            model["output"],
-                                                                            model["residual"], model["mse"],
-                                                                            model['psnr']])
+            _, summary, step, loss, images, residual, mse, psnr, fid = sess.run([model["optimizer"], model["summary"],
+                                                                                 model["global_step"], model["loss"],
+                                                                                 model["output"],
+                                                                                 model["residual"], model["mse"],
+                                                                                 model['psnr'], model["file_name"]])
 
             start = time() - start
             writer.add_summary(summary, step)
             writer.flush()
+            print(fid)
             print(
                 "step %5d with loss %.8f takes time %.3f seconds. MSE= %.3f, PSNR= %.3f" % (i, loss, start, mse, psnr))
             if (i % 500 == 1):
@@ -78,10 +81,8 @@ def main(_):
                 if not os.path.exists(dir):
                     os.mkdir(dir)
                 for j in range(len(images)):
-                    cv2.imwrite(os.path.join(dir, "full_%02d.jpg" % j), postprocess(images[j]))
-                    cv2.imwrite(os.path.join(dir, "res_%02d.jpg" % j), postprocess(residual[j]))
-                    np.save(os.path.join(dir, "full.npy"), np.array(images))
-                    np.save(os.path.join(dir, "res.npy"), np.array(residual))
+                    cv2.imwrite(os.path.join(dir, "full_%s.jpg" % fid[j]), postprocess(images[j]))
+                    cv2.imwrite(os.path.join(dir, "res_%s.jpg" % fid[j]), postprocess(residual[j]))
     sess.close()
 
 

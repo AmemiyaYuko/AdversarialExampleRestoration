@@ -3,7 +3,7 @@ from tensorflow.contrib.layers import l2_regularizer
 
 
 # using tf 1.4.0 rc
-def model(ori_image, adv_image, num_layers=14, image_size=299, is_trainging=False):
+def model(ori_image, adv_image, file_name, num_layers=14, image_size=299, is_trainging=False):
     residual_image = tf.add(ori_image, -1.0 * adv_image)
     x = adv_image  # tf.layers.conv2d(inputs=tf.layers.batch_normalization(adv_image, training=is_trainging), filters=32,
     # kernel_size=[1, 1], padding="valid")
@@ -51,4 +51,5 @@ def model(ori_image, adv_image, num_layers=14, image_size=299, is_trainging=Fals
             "residual": output,
             "ori_image": ori_image,
             "adv_image": adv_image,
+            "file_name": file_name,
             }
