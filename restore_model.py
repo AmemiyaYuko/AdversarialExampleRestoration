@@ -3,7 +3,9 @@ from tensorflow.contrib.layers import l2_regularizer
 
 
 # using tf 1.4.0 rc
-def model(ori_image, adv_image, file_name, num_layers=12, image_size=299, is_trainging=False):
+def model(num_layers=12, image_size=299, is_trainging=False):
+    ori_image = tf.placeholder(dtype=tf.float32, shape=[None, 299, 299, 3], name="ori_images")
+    adv_image = tf.placeholder(dtype=tf.float32, shape=[None, 299, 299, 3], name="adv_images")
     residual_image = tf.add(ori_image, -1.0 * adv_image)
     x = adv_image  # tf.layers.conv2d(inputs=tf.layers.batch_normalization(adv_image, training=is_trainging), filters=32,
     # kernel_size=[1, 1], padding="valid")
@@ -17,7 +19,7 @@ def model(ori_image, adv_image, file_name, num_layers=12, image_size=299, is_tra
         nodes.append(x)
     x = nodes[-1]
     for i in range(num_layers // 2):
-        x = tf.add(x, nodes[num_layers // 2 - i]) / 2.0
+        # x = tf.add(x, nodes[num_layers // 2 - i]) / 2.0
         # x=tf.concat([x,nodes[num_layers//2-i]],axis=0)
         x = tf.layers.batch_normalization(x, training=is_trainging)
         x = tf.layers.conv2d_transpose(inputs=x, filters=20, kernel_size=[3, 3], padding="valid",
@@ -51,5 +53,4 @@ def model(ori_image, adv_image, file_name, num_layers=12, image_size=299, is_tra
             "residual": output,
             "ori_image": ori_image,
             "adv_image": adv_image,
-            "file_name": file_name,
             }

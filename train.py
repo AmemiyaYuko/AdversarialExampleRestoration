@@ -53,32 +53,36 @@ def main(_):
             shutil.rmtree(logdir)
             os.mkdir(logdir)
 
-        iterator = get_database(r"/home/qide/output", r"/home/qide/imagenet-data/ILSVRC2012_img_val")
-        ori, adv, file_name = iterator.get_next()
-        model = res_model(ori, adv, file_name, is_trainging=FLAGS.is_training)
+        iterator = get_database(r"D:\2010_adv", r"D:\ILSVRC2012_img_val")
+
+        model = res_model(is_trainging=FLAGS.is_training)
         writer = tf.summary.FileWriter(logdir, sess.graph)
         sess.run(tf.global_variables_initializer())
         saver = tf.train.Saver()
-        for i in range(300002):
+        for i in range(30002):
+            ori, adv, file_name = sess.run(iterator.get_next())
             start = time()
-            _, summary, step, loss, images, residual, mse, psnr, fid = sess.run([model["optimizer"], model["summary"],
-                                                                                 model["global_step"], model["loss"],
-                                                                                 model["output"],
-                                                                                 model["residual"], model["mse"],
-                                                                                 model['psnr'], model["file_name"]])
+            _, summary, step, loss, images, residual, mse, psnr = sess.run([model["optimizer"], model["summary"],
+                                                                            model["global_step"], model["loss"],
+                                                                            model["output"],
+                                                                            model["residual"], model["mse"],
+                                                                            model['psnr']],
+                                                                           feed_dict={model["ori_image"]: ori,
+                                                                                      model["adv_image"]: adv})
+            fid = file_name
 
             start = time() - start
             writer.add_summary(summary, step)
             writer.flush()
             print(
                 "step %5d with loss %.8f takes time %.3f seconds. MSE= %.3f, PSNR= %.3f" % (i, loss, start, mse, psnr))
-            if (i % 5000 == 1):
+            if (i % 2000 == 1):
                 save_path = os.path.join(FLAGS.checkpoint_path, "step%06d" % i, "")
                 if not os.path.exists(save_path):
                     os.mkdir(save_path)
-                result = saver.save(sess, save_path)
+                result = saver.save(sess, os.path.join(save_path, "model.ckpt"))
                 print("saved on " + result)
-                dir = r"/home/qide/Code/AdversarialExampleRestoration/output_images/" + str("%06d" % i)
+                dir = r"D:\new_output\\" + str("%06d" % i)
                 if not os.path.exists(dir):
                     os.mkdir(dir)
                 for j in range(len(images)):
